@@ -15,7 +15,7 @@ class Board extends React.Component {
     return (
       <Square
         value={this.props.squares[i]}
-        onClick={() => this.props.onCLick(i)}
+        onClick={() => this.props.onClick(i)}
       />
     );
   }
@@ -52,12 +52,13 @@ class Game extends React.Component {
           squares: Array(9).fill(null)
         }
       ],
-      xIsNext: true
+      xIsNext: true,
+      stepNumber: 0
     };
   }
 
   handleCLick(i) {
-    const history = this.state.history;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const newSquares = current.squares.slice();
     if (calculateWinner(newSquares) || newSquares[i]) {
@@ -70,14 +71,31 @@ class Game extends React.Component {
           squares: newSquares
         }
       ]),
-      xIsNext: !this.state.xIsNext
+      xIsNext: !this.state.xIsNext,
+      stepNumber: history.length
+    });
+  }
+
+  jumpTo(move) {
+    this.setState({
+      stepNumber: move,
+      xIsNext: move % 2 === 0
     });
   }
 
   render() {
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ? "Go to move #" + move : "Go to game start";
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
 
     let status;
     if (winner) {
@@ -89,11 +107,11 @@ class Game extends React.Component {
     return (
       <div className="game">
         <div className="game-board">
-          <Board squares={current.squares} onCLick={i => this.handleCLick(i)} />
+          <Board squares={current.squares} onClick={i => this.handleCLick(i)} />
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
